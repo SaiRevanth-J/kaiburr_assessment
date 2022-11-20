@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web-app
+  labels:
+    type: app
+spec:
+  selector:
+    matchLabels:
+      type: app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: app
+    spec:
+      containers:
+      - name: web-app
+        image: revanthkumar9/webapp
+        env:
+         - name: MONGODB_URI
+           valueFrom:
+             configMapKeyRef:
+               name: mongodb_config
+               key: url
+        
+        volumeMounts:
+          - name: service
+            mountPath: /starter
+          - name: service2
+            mountPath: /starter/node_modules
+      initContainers:
+      - name: git-sync
+        image: alpine/git
+        args:
+            - clone
+            - --single-branch
+            - --
+            - https://github.com/SaiRevanth-J/hackathon-starter-kaibur.git
+            - /data
+
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: service
+          mountPath: /data
+      volumes:
+      - name: service
+        emptyDir: {}
+      - name: service2
+        persistentVolumeClaim:
+          claimName: backend-claim

@@ -1,0 +1,41 @@
+---
+- hosts: db
+  become: yes
+  tasks:
+      - name: Add an Apt signing key
+        ansible.builtin.apt_key:
+          url: https://www.mongodb.org/static/pgp/server-6.0.asc
+          state: present
+        when: ansible_os_family== "Debian"
+
+      - name: repo of mongodb
+        ansible.builtin.apt_repository:
+          repo: deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse
+          state: present
+          filename: /etc/apt/sources.list.d/mongodb-org-6.0.list
+        when: ansible_os_family== "Debain"
+
+      - name: Update
+        ansible.builtin.apt:
+          name: "*"
+          state: latest
+        when: ansible_os_family=="Debian"
+
+  - name: Install mongodb
+        ansible.builtin.apt:
+          name: mongodb-org
+          state: present
+        when: ansible_os_family == "Debian"
+        notify:
+        - mongodb service
+        - mongodb service enable
+        
+  handlers:
+      - name: moongodb service
+        ansible.builtin.service:
+          name: mongod
+          state: started
+      - name: mongodb servive enable
+        ansible.builtin.service:
+          name: mongod
+          enabled: yes
